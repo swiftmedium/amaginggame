@@ -1,146 +1,182 @@
+<!doctype html>
 <html>
   <head>
-    <title>Amazing Game</title>
-<!--    <input type="button" value="Reset" onclick="" /> -->
     <style>
-      canvas {
-        border: 2px solid black;
-        background-color: #6897bb;        
-      }
-      
+        * {
+  margin: 0;
+  padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%; }
+
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: block;
+  background-color: #F9F9F9; }
+
+#container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2; }
+
     </style>
-   </head> 
-  <body onload="startGame()">
-
-    <div id="canvas">
-        <h1>An Amazing Game</h1>
-    </div>
-    
     <script>
-       var canvasWidth=600;
-       var canvasHeight=600;
-       var playerRed;
-       var playerGreen;
-       //var fallSpeed=10;
-       var intervalSpeed=100;
-       var interval = setInterval(updateCanvas, intervalSpeed);
-       var jumping=false;
-       var jumpspeed=-150;
-       var cnt=0;
-       
-       
+// Global Variables
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+var screenHeight = $(window).height();
+var screenWidth = $(window).width();
+var shapes = {};
+var shapeIndex = 0;
+var score = 0;
+var fallSpeed = 8;
+var shapeGenerateSpeed = 100;
 
-       function startGame() {
-         gameCanvas.start();
-         playerRed=new createPlayer(30,30,10,200,"red",10);
-         playerGreen=new createPlayer(30,30,180,300,"green",20);
-       }
-       
-       document.body.onkeyup = function(e) {
-                if (e.key == " " ||  e.code == "Space" || e.keyCode == 32) {
-                    playerRed.jump;
-                }
-       }
-       document.onkeydown = function(event) {
-         switch (event.keyCode) {
-            case 85:
-                playerRed.jump();
-            break;
-            case 80:
-                playerGreen.jump();
-            break;
-            case 37:
-               alert('Left key');
-            break;
-            case 38:
-                alert('Up key');
-            break;
-            case 39:
-               alert('Right key');
-            break;
-            case 40:
-               alert('Down key');
-            break;
-         }
-      };
-       
-       var gameCanvas = {
-         canvas: document.createElement("canvas"),
-         start: function () {
-           this.canvas.width=canvasWidth;
-           this.canvas.height=canvasHeight;
-           this.context=this.canvas.getContext("2d");
-           document.body.insertBefore(this.canvas, document.body.childNodes[2]);
-         }
-                 
-         }
+// Setting Canvas Dimensions
+$(window).resize(function(){
+    screenWidth = window.innerWidth;
+    screenHeight = window.innerHeight;
+    canvas.width = screenWidth;
+    canvas.height = screenHeight;
+});
+canvas.width = screenWidth;
+canvas.height = screenHeight;
 
-        
+// $(document).mousemove(function(e){
+//   dude.Position.X = e.pageX;
+//   dude.Position.Y = e.pageY;
+// })
 
-         function createPlayer(w,h,x,y,color,fallSpeed) {
-            this.width=w;
-            this.height=h;
-            this.x=x;
-            this.y=y;
+$(document).keydown(function(e){
+    // console.log(e.which);
+    if (e.which == 65){
+      dude.Velocity.X = -5;
+    } else if (e.which == 87){
+      dude.Velocity.Y = -5;
+    } else if (e.which == 68){
+      dude.Velocity.X = 5;
+    } else if (e.which == 83){
+      dude.Velocity.Y = 5;
+    }
+});
+$(document).keyup(function(){
+  dude.Velocity.X = 0;
+  dude.Velocity.Y = 0;
+})
 
-            ctx= gameCanvas.context;
-            ctx.fillStyle = color;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+//Generates Snake Head
+function Shape(posX, width, height) {
+    this.Width = width;
+    this.Height = height;
+    this.Color = "#000000"
+    this.Position = {
+        X: posX,
+        Y: -this.Height
+    };
+    this.Velocity = Math.random() * fallSpeed + 5;
+    this.Index = shapeIndex;
 
-           
-            this.makeFall = function() {
-               // alert("in");
-                this.y += fallSpeed;
-                fallSpeed += 0.1;
-                //alert(color);
-                // if touches ground, stop
-                //this.stopPlayerAtGround();
+    shapes[shapeIndex] = this;
+    shapeIndex++
 
-                this.redraw();
-            }
+    this.checkCollisions = function() {
+      if(this.Position.Y >= screenHeight){
+        delete shapes[this.Index];
+      }
+    }
+    this.updatePosition = function() {
+        this.Position.Y += this.Velocity;
+    }
+    this.Draw = function() {
+        ctx.beginPath();
+        ctx.rect(this.Position.X, this.Position.Y, this.Width, this.Height);
+        ctx.fillStyle = this.Color;
+        ctx.fill();
+    }
+    this.update = function(){
+        this.checkCollisions();
+        this.updatePosition();
+        this.Draw();
+    }
+}
+function Dude(posX, width, height){
+  this.Width = width;
+  this.Height = height;
+  this.Color = "#575757"
+  this.Position = {X: posX, Y: screenHeight-this.Height}
+  this.Velocity = {X: 0, Y: 0,}
 
-            this.redraw = function() {
-                //alert("bef");
-                ctx.clearRect(0,0,canvasWidth,canvasHeight);
-                //alert("aft");
-                ctx.fillStyle = color;
-                //alert(color);
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-            }
+  this.checkCollisions = function(){
+    function collision(a,b){
+      if (
+        a.Position.X <= b.Position.X + b.Width &&
+        a.Position.X + a.Width >= b.Position.X &&
+        a.Position.Y + a.Height >= b.Position.Y &&
+        a.Position.Y <= b.Position.Y + b.Height ){
+          return true
+      }
+    }
+    for (i in shapes){
+      if(collision(this, shapes[i])){
+        newGame();
+      }
+    }
+  }
+  this.updatePosition = function(){
+    this.Position.X += this.Velocity.X;
+    this.Position.Y += this.Velocity.Y;
+  }
+  this.Draw = function(){
+    ctx.beginPath();
+    ctx.rect(this.Position.X, this.Position.Y, this.Width, this.Height);
+    ctx.fillStyle = this.Color;
+    ctx.fill();
+  }
+  this.update = function(){
+    this.checkCollisions();
+    this.updatePosition();
+    this.Draw();
+  }
+}
 
-            this.stopPlayerAtGround= function() {
-                var ground = canvasHeight-this.height;
-                if (this.y > ground) {
-                    this.y = ground;
-                }
-            }
+var dude = new Dude(screenWidth/2, 30, 30);
 
-            this.stopPlayer= function() {
+function newGame(){
+  dude = new Dude(screenWidth/2, 30, 30);
+  shapes = {};
+  $("#container").append("<h2>"+score+"</h2>");
+  score = 0;
+}
+function shapeGenerate(){
+  new Shape(Math.random()*screenWidth,40,40);
+  score++
+  $(".score").html(score);
+}
 
-            }
+function Updater() {
+    ctx.clearRect(0, 0, screenWidth, screenHeight);
+    for(i in shapes){
+      shapes[i].update();
+    }
+    dude.update();
+    // requestAnimationFrame(Updater);
+}
+setInterval(Updater, 10);
+setInterval(shapeGenerate, shapeGenerateSpeed);
 
-            this.jump = function() {
-                this.y += jumpspeed;
-                this.redraw();
-                //fallSpeed=20;
-                //fallSpeed=100;
-            }
-         }
-
-         function updateCanvas() {
-            //ctx = gameCanvas.context;
-             cnt++;
-            //alert(cnt);
-            playerGreen.makeFall();
-           playerRed.makeFall();
-           
-           
-  
-        }
-       
- 
     </script>
-    
-  </body>
-  
-</html>
+  </head>
+  <body>
+
+        <div id="container">
+            <p>Use WASD to move grey square</p>
+            <h1>Score: <span class="score"></span></h1>
+        </div>
+        <canvas id="canvas"></canvas>
+
+      </body>
+      </html>
