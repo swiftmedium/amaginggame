@@ -1,52 +1,146 @@
-<!doctype html>
 <html>
   <head>
+    <title>Amazing Game</title>
+<!--    <input type="button" value="Reset" onclick="" /> -->
+    <style>
+      canvas {
+        border: 2px solid black;
+        background-color: #6897bb;        
+      }
+      
+    </style>
+   </head> 
+  <body onload="startGame()">
+
+    <div id="canvas">
+        <h1>An Amazing Game</h1>
+    </div>
+    
     <script>
+       var canvasWidth=600;
+       var canvasHeight=600;
+       var playerRed;
+       var playerGreen;
+       //var fallSpeed=10;
+       var intervalSpeed=100;
+       var interval = setInterval(updateCanvas, intervalSpeed);
+       var jumping=false;
+       var jumpspeed=-150;
+       var cnt=0;
+       
+       
 
+       function startGame() {
+         gameCanvas.start();
+         playerRed=new createPlayer(30,30,10,200,"red",10);
+         playerGreen=new createPlayer(30,30,180,300,"green",20);
+       }
+       
+       document.body.onkeyup = function(e) {
+                if (e.key == " " ||  e.code == "Space" || e.keyCode == 32) {
+                    playerRed.jump;
+                }
+       }
+       document.onkeydown = function(event) {
+         switch (event.keyCode) {
+            case 85:
+                playerRed.jump();
+            break;
+            case 80:
+                playerGreen.jump();
+            break;
+            case 37:
+               alert('Left key');
+            break;
+            case 38:
+                alert('Up key');
+            break;
+            case 39:
+               alert('Right key');
+            break;
+            case 40:
+               alert('Down key');
+            break;
+         }
+      };
+       
+       var gameCanvas = {
+         canvas: document.createElement("canvas"),
+         start: function () {
+           this.canvas.width=canvasWidth;
+           this.canvas.height=canvasHeight;
+           this.context=this.canvas.getContext("2d");
+           document.body.insertBefore(this.canvas, document.body.childNodes[2]);
+         }
+                 
+         }
+
+        
+
+         function createPlayer(w,h,x,y,color,fallSpeed) {
+            this.width=w;
+            this.height=h;
+            this.x=x;
+            this.y=y;
+
+            ctx= gameCanvas.context;
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+
+           
+            this.makeFall = function() {
+               // alert("in");
+                this.y += fallSpeed;
+                fallSpeed += 0.1;
+                //alert(color);
+                // if touches ground, stop
+                //this.stopPlayerAtGround();
+
+                this.redraw();
+            }
+
+            this.redraw = function() {
+                //alert("bef");
+                ctx.clearRect(0,0,canvasWidth,canvasHeight);
+                //alert("aft");
+                ctx.fillStyle = color;
+                //alert(color);
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+
+            this.stopPlayerAtGround= function() {
+                var ground = canvasHeight-this.height;
+                if (this.y > ground) {
+                    this.y = ground;
+                }
+            }
+
+            this.stopPlayer= function() {
+
+            }
+
+            this.jump = function() {
+                this.y += jumpspeed;
+                this.redraw();
+                //fallSpeed=20;
+                //fallSpeed=100;
+            }
+         }
+
+         function updateCanvas() {
+            //ctx = gameCanvas.context;
+             cnt++;
+            //alert(cnt);
+            playerGreen.makeFall();
+           playerRed.makeFall();
+           
+           
+  
+        }
+       
+ 
     </script>
-  </head>
-  <body>
-    <script type="module">
-
-      import  {Application}  from './pixi.min.js';
-      import {Assets} from './pixi.min.js';
-      import {Sprite} from './pixi.min.js';
-
-(async () =>
-{
-    // Create a new application
-    const app = new Application();
-
-    // Initialize the application
-    await app.init({ background: '#1099bb', resizeTo: window });
-
-    // Append the application canvas to the document body
-    document.body.appendChild(app.canvas);
-
-    // Load the bunny texture
-    const texture = await Assets.load('./bunny.png');
-
-    // Create a bunny Sprite
-    const bunny = new Sprite(texture);
-
-    // Center the sprite's anchor point
-    bunny.anchor.set(0.5);
-
-    // Move the sprite to the center of the screen
-    bunny.x = app.screen.width / 2;
-    bunny.y = app.screen.height / 2;
-
-    app.stage.addChild(bunny);
-
-    // Listen for animate update
-    app.ticker.add((time) =>
-    {
-        // Just for fun, let's rotate mr rabbit a little.
-        // * Delta is 1 if running at 100% performance *
-        // * Creates frame-independent transformation *
-        bunny.rotation += 0.1 * time.deltaTime;
-    });
-})();
-    </script>
+    
   </body>
+  
 </html>
